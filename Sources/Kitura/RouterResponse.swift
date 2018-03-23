@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import KituraNet
+//import KituraNet
 import KituraTemplateEngine
 import LoggerAPI
 import Foundation
-
+import NIOHTTP1
 
 // MARK: RouterResponse
 
@@ -34,9 +34,9 @@ public class RouterResponse {
         /// Whether data has been added to buffer
         var invokedSend = false {
             didSet {
-                if invokedSend && response?.statusCode == .unknown {
+                if invokedSend && response?.statusCode == nil {
                     // change statusCode to .OK
-                    response?.statusCode = .OK
+                    response?.statusCode = .ok
                 }
             }
         }
@@ -106,9 +106,9 @@ public class RouterResponse {
     public var headers: Headers
 
     /// HTTP status code of the response.
-    public var statusCode: HTTPStatusCode {
+    public var statusCode: HTTPResponseStatus? {
         get {
-            return response.statusCode ?? .unknown
+            return response.statusCode
         }
 
         set(newValue) {
@@ -128,13 +128,13 @@ public class RouterResponse {
         self.routerStack = routerStack
         self.request = request
         headers = Headers(headers: response.headers)
-        statusCode = .unknown
+        statusCode = nil 
         state.response = self
     }
 
     deinit {
         if !state.invokedEnd {
-            if !state.invokedSend && statusCode == .unknown {
+            if !state.invokedSend && statusCode ==  nil {
                 statusCode = .serviceUnavailable
             }
 
@@ -158,8 +158,8 @@ public class RouterResponse {
         lifecycle.resetOnEndInvoked()
 
         // Sets status code if unset
-        if statusCode == .unknown {
-            statusCode = .OK
+        if statusCode == nil {
+            statusCode = .ok
         }
 
         let content = lifecycle.writtenDataFilter(buffer.data)
@@ -185,7 +185,7 @@ public class RouterResponse {
         for  (_, cookie) in cookies {
             var cookieString = cookie.name + "=" + cookie.value + "; path=" + cookie.path + "; domain=" + cookie.domain
             if  let expiresDate = cookie.expiresDate {
-                cookieString += "; expires=" + SPIUtils.httpDate(expiresDate)
+                cookieString += "; expires=\(expiresDate)" //+ SPIUtils.httpDate(expiresDate)
             }
 
             if  cookie.isSecure {
@@ -194,7 +194,9 @@ public class RouterResponse {
 
             cookieStrings.append(cookieString)
         }
-        response.headers.append("Set-Cookie", value: cookieStrings)
+        for cookieString in cookieStrings {
+            response.headers.add(name: "Set-Cookie", value: cookieString)
+        }
     }
 
     /// Send a string.
@@ -310,7 +312,7 @@ public class RouterResponse {
     /// - Parameter status: the HTTP status code object.
     /// - Returns: this RouterResponse.
     @discardableResult
-    public func status(_ status: HTTPStatusCode) -> RouterResponse {
+    public func status(_ status: HTTPResponseStatus) -> RouterResponse {
         response.statusCode = status
         return self
     }
@@ -319,13 +321,13 @@ public class RouterResponse {
     ///
     /// - Parameter status: the HTTP status code.
     /// - Returns: this RouterResponse.
-    public func send(status: HTTPStatusCode) -> RouterResponse {
+    public func send(status: HTTPResponseStatus) -> RouterResponse {
         guard !state.invokedEnd else {
             Log.warning("RouterResponse send(status:) invoked after end() for \(self.request.urlURL)")
             return self
         }
         self.status(status)
-        send(HTTPURLResponse.localizedString(forStatusCode: status.rawValue))
+        send(status.reasonPhrase)
         return self
     }
 
@@ -336,7 +338,7 @@ public class RouterResponse {
     /// - Throws: Socket.Error if an error occurred while writing to a socket.
     /// - Returns: this RouterResponse.
     @discardableResult
-    public func redirect(_ path: String, status: HTTPStatusCode = .movedTemporarily) throws -> RouterResponse {
+    public func redirect(_ path: String, status: HTTPResponseStatus = .found) throws -> RouterResponse {
         headers.setLocation(path)
         try self.status(status).end()
         return self

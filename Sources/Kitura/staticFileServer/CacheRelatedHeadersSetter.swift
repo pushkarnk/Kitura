@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import KituraNet
+//import KituraNet
 import Foundation
 
 extension StaticFileServer {
@@ -48,7 +48,7 @@ extension StaticFileServer {
             if addLastModifiedHeader {
                 let date = fileAttributes[FileAttributeKey.modificationDate] as? Date
                 if let date = date {
-                    response.headers["Last-Modified"] = SPIUtils.httpDate(date)
+                    response.headers["Last-Modified"] = date.description//SPIUtils.httpDate(date)
                 }
             }
         }

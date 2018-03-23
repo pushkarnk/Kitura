@@ -172,7 +172,7 @@ extension StaticFileServer {
                         if ifRangeHeaderShouldPreventPartialReponse(requestHeaders: request.headers, fileAttributes: fileAttributes) {
                             // If-Range header prevented a partial response. Send the entire file
                             try response.send(fileName: filePath)
-                            response.statusCode = .OK
+                            response.statusCode = .ok
                         } else {
                             // Send a partial response
                             serveNonDirectoryPartialFile(filePath, fileSize: fileSize, ranges: rangeHeaderValue.ranges, response: response)
@@ -185,11 +185,11 @@ extension StaticFileServer {
                     // Regular request OR Syntactically invalid range request OR fileSize was not available
                     if method == "HEAD" {
                         // Send only headers
-                        _ = response.send(status: .OK)
+                        _ = response.send(status: .ok)
                     } else {
                         // Send the entire file
                         try response.send(fileName: filePath)
-                        response.statusCode = .OK
+                        response.statusCode = .ok
                     }
                 }
             } catch {
@@ -210,7 +210,7 @@ extension StaticFileServer {
 
         private func serveNotSatisfiable(_ filePath: String, fileSize: UInt64, response: RouterResponse) {
             response.headers["Content-Range"] = "bytes */\(fileSize)"
-            _ = response.send(status: .requestedRangeNotSatisfiable)
+            _ = response.send(status: .rangeNotSatisfiable)
         }
 
         private func serveNonDirectoryPartialFile(_ filePath: String, fileSize: UInt64, ranges: [Range<UInt64>], response: RouterResponse) {

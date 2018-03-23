@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import KituraNet
+import NIOHTTP1 
 
 /// A dummy class to get the documentation for the HTTPStatusCode below to be emitted.
 private class DummyHTTPStatusCodeClass {}
@@ -22,4 +22,4 @@ private class DummyHTTPStatusCodeClass {}
 /// Bridge [HTTPStatusCode](http://ibm-swift.github.io/Kitura-net/Enums/HTTPStatusCode.html)
 /// from [KituraNet](http://ibm-swift.github.io/Kitura-net) so that you only need to import
 /// `Kitura` to access it.
-public typealias HTTPStatusCode = KituraNet.HTTPStatusCode
+public typealias HTTPStatusCode = NIOHTTP1.HTTPResponseStatus 

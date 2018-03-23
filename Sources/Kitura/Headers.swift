@@ -15,19 +15,20 @@
  */
 
 import Foundation
-import KituraNet
+import NIOHTTP1
+///import KituraNet
 
 /// The struct containing the HTTP headers and implements the headers APIs for the
 /// `RouterRequest` and `RouterResponse` classes.
 public struct Headers {
 
     /// The header storage
-    internal var headers: HeadersContainer
+    internal var headers: HTTPHeaders 
 
     /// Initialize a `Headers` instance
     ///
     /// - Parameter headers: The container for the headers
-    init(headers: HeadersContainer) {
+    init(headers: HTTPHeaders) {
         self.headers = headers
     }
 
@@ -36,25 +37,37 @@ public struct Headers {
     /// - Parameter key: The key of the header to append a value to.
     /// - Parameter value: The value to be appended to the specified header.
     public mutating func append(_ key: String, value: String) {
-        headers.append(key, value: value)
+        headers.add(name: key, value: value)
+    }
+
+    public subscript(key: String) -> String? {
+        get {
+            return headers[key].first
+        }
+
+        set(newValue) {
+            headers.add(name: key, value: newValue!)
+        }
     }
 }
 
-/// Conformance to the `Collection` protocol
+/*/// Conformance to the `Collection` protocol
 extension Headers: Collection {
 
     /// The starting index of the `Headers` collection
     public var startIndex: HeadersIndex {
-        return headers.startIndex
+        return 0 
     }
 
     /// The ending index of the `Headers` collection
     public var endIndex: HeadersIndex {
-        return headers.endIndex
+        let count = 0
+        headers.forEach { count += 1 }
+        return count
     }
 
     /// The type of an Index of the `Headers` collection.
-    public typealias HeadersIndex = HeadersContainer.Index
+    public typealias HeadersIndex = Int 
 
     /// Get the value of a HTTP header
     ///
@@ -63,7 +76,7 @@ extension Headers: Collection {
     /// - Returns: The value of the specified HTTP header, or nil, if it doesn't exist.
     public subscript(key: String) -> String? {
         get {
-            return headers[key]?.first
+            return headers[key].first
         }
 
         set(newValue) {
@@ -98,7 +111,7 @@ extension Headers: Collection {
         return headers.index(after: i)
     }
     //  swiftlint:enable variable_name
-}
+}*/
 
 /// Various convenience methods for setting various HTTP headers
 extension Headers {

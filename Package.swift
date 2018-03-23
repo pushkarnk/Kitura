@@ -29,7 +29,11 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/IBM-Swift/Kitura-net.git", .upToNextMinor(from: "2.0.0")),
+        //.package(url: "https://github.com/IBM-Swift/Kitura-net.git", .upToNextMinor(from: "2.0.0")),
+        .package(url: "https://github.com/IBM-Swift/BlueSSLService.git", .upToNextMinor(from: "0.12.0")),
+        .package(url: "https://github.com/IBM-Swift/BlueSocket.git", .upToNextMinor(from: "0.12.0")),
+        .package(url: "https://github.com/apple/swift-nio", from: "1.2.1"),
+        //.package(url: "https://github.com/apple/swift-nio", .upToNextMinor(from: "1.0.0")),
         .package(url: "https://github.com/IBM-Swift/Kitura-TemplateEngine.git", .upToNextMinor(from: "1.7.0")),
         .package(url: "https://github.com/IBM-Swift/KituraContracts.git", .upToNextMinor(from: "0.0.19")),
     ],
@@ -38,7 +42,7 @@ let package = Package(
         // Targets can depend on other targets in this package, and on products in packages which this package depends on.
         .target(
             name: "Kitura",
-            dependencies: ["KituraNet", "KituraTemplateEngine", "KituraContracts"]
+            dependencies: [/*"KituraNet", */ "KituraTemplateEngine", "KituraContracts", "NIO", "NIOHTTP1", "Socket", "SSLService"]
         ),
         .testTarget(
             name: "KituraTests",

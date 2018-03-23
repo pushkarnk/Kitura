@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import KituraNet
+//import KituraNet
+import NIOHTTP1
 import Socket
 import LoggerAPI
 
@@ -248,9 +249,10 @@ public class RouterRequest {
 }
 
 private class Cookies {
-    fileprivate static func parse(headers: HeadersContainer) -> [String: HTTPCookie] {
+    fileprivate static func parse(headers: HTTPHeaders) -> [String: HTTPCookie] {
         var cookies = [String: HTTPCookie]()
-        guard let cookieHeaders = headers["cookie"] else {
+        /*guard*/ let cookieHeaders = headers["cookie"] //else {
+        if headers["cookie"].isEmpty {
             return cookies
         }
 

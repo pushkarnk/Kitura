@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import KituraNet
+//import KituraNet
 import LoggerAPI
 import Foundation
 import KituraTemplateEngine
@@ -457,7 +457,7 @@ extension Router : ServerDelegate {
             }
             do {
                 if  !routeResp.state.invokedEnd {
-                    if  routeResp.statusCode == .unknown  && !routeResp.state.invokedSend {
+                    if  routeResp.statusCode == nil  && !routeResp.state.invokedSend {
                         strongSelf.sendDefaultResponse(request: routeReq, response: routeResp)
                     }
                     if  !routeResp.state.invokedEnd {

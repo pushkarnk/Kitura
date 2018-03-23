@@ -32,7 +32,7 @@ class FileResourceServer {
 
         do {
             try response.send(fileName: resourceFileName)
-            try response.status(.OK).end()
+            try response.status(.ok).end()
         } catch {
             Log.error("failed to send response with resource \(resourceFileName)")
         }
