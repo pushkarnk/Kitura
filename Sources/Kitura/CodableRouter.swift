@@ -16,7 +16,7 @@
 
 import Foundation
 import LoggerAPI
-import KituraNet
+import KituraNIO
 import KituraContracts
 
 // Codable router

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import KituraNet
+import KituraNIO
 import LoggerAPI
 
 import Foundation
@@ -56,12 +56,12 @@ public class Kitura {
     @discardableResult
     public class func addHTTPServer(onPort port: Int,
                                     with delegate: ServerDelegate,
-                                    withSSL sslConfig: SSLConfig?=nil,
+//                                    withSSL sslConfig: SSLConfig?=nil,
                                     keepAlive keepAliveState: KeepAliveState = .unlimited,
                                     allowPortReuse: Bool = false) -> HTTPServer {
         let server = HTTP.createServer()
         server.delegate = delegate
-        server.sslConfig = sslConfig?.config
+//      server.sslConfig = sslConfig?.config
         server.keepAliveState = keepAliveState
         server.allowPortReuse = allowPortReuse
         httpServersAndPorts.append((server: server, port: port))
@@ -81,16 +81,16 @@ public class Kitura {
     /// - Parameter with: The `ServerDelegate` to use.
     /// - Parameter allowPortReuse: Determines whether the listener port may be shared with other Kitura instances (`SO_REUSEPORT`). Defaults to `false`. If the specified port is already in use by another listener that has not allowed sharing, the server will fail to start.
     /// - Returns: The created `FastCGIServer`.
-    @discardableResult
-    public class func addFastCGIServer(onPort port: Int,
-                                       with delegate: ServerDelegate,
-                                       allowPortReuse: Bool = false) -> FastCGIServer {
-        let server = FastCGI.createServer()
-        server.delegate = delegate
-        server.allowPortReuse = allowPortReuse
-        fastCGIServersAndPorts.append((server: server, port: port))
-        return server
-    }
+//    @discardableResult
+//    public class func addFastCGIServer(onPort port: Int,
+//                                       with delegate: ServerDelegate,
+//                                       allowPortReuse: Bool = false) -> FastCGIServer {
+//        let server = FastCGI.createServer()
+//        server.delegate = delegate
+//        server.allowPortReuse = allowPortReuse
+//        fastCGIServersAndPorts.append((server: server, port: port))
+//        return server
+//    }
 
     /// Start the Kitura framework.
     ///
@@ -122,14 +122,14 @@ public class Kitura {
                 Log.error("Error listening on port \(port): \(error). Use server.failed(callback:) to handle")
             }
         }
-        for (server, port) in fastCGIServersAndPorts {
-            Log.verbose("Starting a FastCGI Server on port \(port)...")
-            do {
-                try server.listen(on: port)
-            } catch {
-                Log.error("Error listening on port \(port): \(error). Use server.failed(callback:) to handle")
-            }
-        }
+//        for (server, port) in fastCGIServersAndPorts {
+//            Log.verbose("Starting a FastCGI Server on port \(port)...")
+//            do {
+//                try server.listen(on: port)
+//            } catch {
+//                Log.error("Error listening on port \(port): \(error). Use server.failed(callback:) to handle")
+//            }
+//        }
     }
 
     /// Stop all registered servers.
@@ -147,18 +147,18 @@ public class Kitura {
             server.stop()
         }
 
-        for (server, port) in fastCGIServersAndPorts {
-            Log.verbose("Stopping FastCGI Server on port \(port)...")
-            server.stop()
-        }
+//       for (server, port) in fastCGIServersAndPorts {
+//            Log.verbose("Stopping FastCGI Server on port \(port)...")
+//            server.stop()
+//        }
 
         if unregister {
             httpServersAndPorts.removeAll()
-            fastCGIServersAndPorts.removeAll()
+//            fastCGIServersAndPorts.removeAll()
         }
     }
 
     typealias Port = Int
     internal private(set) static var httpServersAndPorts = [(server: HTTPServer, port: Port)]()
-    internal private(set) static var fastCGIServersAndPorts = [(server: FastCGIServer, port: Port)]()
+//    internal private(set) static var fastCGIServersAndPorts = [(server: FastCGIServer, port: Port)]()
 }

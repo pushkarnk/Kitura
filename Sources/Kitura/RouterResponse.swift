@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import KituraNet
+import KituraNIO
 import KituraTemplateEngine
 import LoggerAPI
 import Foundation
@@ -77,7 +77,7 @@ public class RouterResponse {
     let request: RouterRequest
 
     /// The buffer used for output
-    private let buffer = BufferList()
+    private var buffer = BufferList.create()
 
     /// State of the request
     var state = State()
