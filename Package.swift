@@ -29,7 +29,7 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/IBM-Swift/Kitura-NIO.git", from: "0.0.0"),
+        .package(url: "https://github.com/pushkarnk/Kitura-NIO.git", .branch("date-header-optimisation")),
         .package(url: "https://github.com/IBM-Swift/Kitura-TemplateEngine.git", from: "2.0.0"),
         .package(url: "https://github.com/IBM-Swift/KituraContracts.git", from: "1.0.0"),
         .package(url: "https://github.com/IBM-Swift/TypeDecoder.git", from: "1.0.0")
