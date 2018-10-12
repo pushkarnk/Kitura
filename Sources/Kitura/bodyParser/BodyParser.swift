@@ -87,11 +87,10 @@ public class BodyParser: RouterMiddleware {
             return next() // the body was already parsed
         }
 
-        guard request.headers["Content-Length"] != nil,
-            let contentType = request.headers["Content-Type"] else {
+        guard request.httpHeaders["Content-Length"].count != 0, request.httpHeaders["Content-Type"].count != 0 else {
                 return next()
         }
-
+        let contentType = request.httpHeaders["Content-Type"][0]
         request.body = BodyParser.parse(request, contentType: contentType)
         next()
     }
@@ -227,11 +226,10 @@ public class BodyParserMultiValue: BodyParser {
             return next() // the body was already parsed
         }
 
-        guard request.headers["Content-Length"] != nil,
-            let contentType = request.headers["Content-Type"] else {
+        guard request.httpHeaders["Content-Length"].count != 0, request.httpHeaders["Content-Type"].count != 0 else {
                 return next()
         }
-
+        let contentType = request.httpHeaders["Content-Type"][0]
         request.body = BodyParserMultiValue.parse(request, contentType: contentType)
         next()
     }

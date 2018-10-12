@@ -15,6 +15,7 @@
  */
 
 import LoggerAPI
+import KituraNet
 import Foundation
 
 extension StaticFileServer {
@@ -154,22 +155,23 @@ extension StaticFileServer {
                 // At this point only GET or HEAD are expected
                 let request = response.request
                 let method = request.serverRequest.method
-                response.headers["Accept-Ranges"] = acceptRanges ? "bytes" : "none"
+                response.httpHeaders.add(name: "Accept-Ranges", value: acceptRanges ? "bytes" : "none")
                 responseHeadersSetter?.setCustomResponseHeaders(response: response,
                                                                 filePath: filePath,
                                                                 fileAttributes: fileAttributes)
                 // Check headers to see if it is a Range request
                 if acceptRanges,
                     method == "GET", // As per RFC, Only GET request can be Range Request
-                    let rangeHeader = request.headers["Range"],
-                    RangeHeader.isBytesRangeHeader(rangeHeader),
+                    request.httpHeaders["Range"].count > 0,
+                    RangeHeader.isBytesRangeHeader(request.httpHeaders["Range"][0]),
                     let fileSize = (fileAttributes[FileAttributeKey.size] as? NSNumber)?.uint64Value {
+                    let rangeHeader = request.httpHeaders["Range"][0]
                     // At this point it looks like the client requested a Range Request
                     if let rangeHeaderValue = try? RangeHeader.parse(size: fileSize, headerValue: rangeHeader),
                         rangeHeaderValue.type == "bytes",
                         !rangeHeaderValue.ranges.isEmpty {
                         // At this point range is valid and server is able to serve it
-                        if ifRangeHeaderShouldPreventPartialReponse(requestHeaders: request.headers, fileAttributes: fileAttributes) {
+                        if ifRangeHeaderShouldPreventPartialReponse(requestHeaders: request.httpHeaders, fileAttributes: fileAttributes) {
                             // If-Range header prevented a partial response. Send the entire file
                             try response.send(fileName: filePath)
                             response.statusCode = .OK
@@ -206,7 +208,7 @@ extension StaticFileServer {
         }
 
         private func serveNotSatisfiable(_ filePath: String, fileSize: UInt64, response: RouterResponse) {
-            response.headers["Content-Range"] = "bytes */\(fileSize)"
+            response.httpHeaders.add(name: "Content-Range", value: "bytes */\(fileSize)")
             _ = response.send(status: .requestedRangeNotSatisfiable)
         }
 
@@ -215,15 +217,15 @@ extension StaticFileServer {
             if ranges.count == 1 {
                 let data = FileServer.read(contentsOfFile: filePath, inRange: ranges[0])
                 // Send a single part response
-                response.headers["Content-Type"] =  contentType
-                response.headers["Content-Range"] = "bytes \(ranges[0].lowerBound)-\(ranges[0].upperBound)/\(fileSize)"
+                response.httpHeaders.add(name: "Content-Type", value: contentType!)
+                response.httpHeaders.add(name: "Content-Range", value: "bytes \(ranges[0].lowerBound)-\(ranges[0].upperBound)/\(fileSize)")
                 response.send(data: data ?? Data())
                 response.statusCode = .partialContent
 
             } else {
                 // Send multi part response
                 let boundary = "KituraBoundary\(UUID().uuidString)" // Maybe a better boundary can be calculated in the future
-                response.headers["Content-Type"] =  "multipart/byteranges; boundary=\(boundary)"
+                response.httpHeaders.add(name: "Content-Type", value: "multipart/byteranges; boundary=\(boundary)")
                 var data = Data()
                 ranges.forEach { range in
                     let fileData = FileServer.read(contentsOfFile: filePath, inRange: range) ?? Data()
@@ -242,11 +244,12 @@ extension StaticFileServer {
         }
 
 
-        private func ifRangeHeaderShouldPreventPartialReponse(requestHeaders headers: Headers, fileAttributes: [FileAttributeKey : Any]) -> Bool {
+        private func ifRangeHeaderShouldPreventPartialReponse(requestHeaders headers: HTTPHeaders, fileAttributes: [FileAttributeKey : Any]) -> Bool {
             // If-Range is optional
-            guard let ifRange = headers["If-Range"], !ifRange.isEmpty else {
+            guard !headers["If-Range"].isEmpty else {
                 return false
             }
+            let ifRange = headers["If-Range"][0]
             // If-Range can be one of two values: ETag or Last-Modified but not both.
             // If-Range as ETag
             if (ifRange.contains("\"")) {

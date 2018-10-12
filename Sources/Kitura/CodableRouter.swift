@@ -634,9 +634,10 @@ public struct CodableHelpers {
      */
     public static func isContentTypeJSON(_ request: RouterRequest) -> Bool {
         // FIXME: This should be a simple lookup of content type cached on the RouterRequest
-        guard let contentType = request.headers["Content-Type"] else {
+        guard request.httpHeaders["Content-Type"].count > 0 else {
             return false
         }
+        let contentType = request.httpHeaders["Content-Type"][0]
         return contentType.hasPrefix("application/json")
     }
     
@@ -648,9 +649,10 @@ public struct CodableHelpers {
      */
     public static func isContentTypeURLEncoded(_ request: RouterRequest) -> Bool {
         // FIXME: This should be a simple lookup of content type cached on the RouterRequest
-        guard let contentType = request.headers["Content-Type"] else {
+        guard request.httpHeaders["Content-Type"].count > 0 else {
             return false
         }
+        let contentType = request.httpHeaders["Content-Type"][0]
         return contentType.hasPrefix("application/x-www-form-urlencoded")
     }
     
@@ -698,7 +700,7 @@ public struct CodableHelpers {
                 response.status(httpStatusCode(from: error))
                 do {
                     if let bodyData = try error.encodeBody(.json) {
-                        response.headers.setType("json")
+                        response.httpHeaders.setType("json")
                         response.send(data: bodyData)
                     }
                 } catch {
@@ -749,7 +751,7 @@ public struct CodableHelpers {
             if status.class != .successful, let error = error {
                 do {
                     if let bodyData = try error.encodeBody(.json) {
-                        response.headers.setType("json")
+                        response.httpHeaders.setType("json")
                         response.send(data: bodyData)
                     }
                 } catch {
@@ -804,7 +806,7 @@ public struct CodableHelpers {
             if status.class != .successful, let error = error {
                 do {
                     if let bodyData = try error.encodeBody(.json) {
-                        response.headers.setType("json")
+                        response.httpHeaders.setType("json")
                         response.send(data: bodyData)
                     }
                 } catch {
@@ -862,7 +864,7 @@ public struct CodableHelpers {
             if status.class != .successful, let error = error {
                 do {
                     if let bodyData = try error.encodeBody(.json) {
-                        response.headers.setType("json")
+                        response.httpHeaders.setType("json")
                         response.send(data: bodyData)
                     }
                 } catch {
@@ -870,7 +872,7 @@ public struct CodableHelpers {
                     response.status(.internalServerError)
                 }
             } else if let id = id {
-                response.headers["Location"] = String(id.value)
+                response.httpHeaders.add(name: "Location", value: String(id.value))
                 if let codableOutput = codableOutput {
                     response.send(codableOutput)
                 } else {

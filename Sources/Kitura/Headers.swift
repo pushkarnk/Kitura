@@ -169,3 +169,45 @@ extension Headers {
         self.append("Link", value: headerValue)
     }
 }
+
+extension HTTPHeaders {
+    public mutating func setType(_ type: String, charset: String? = nil) {
+        if  let contentType = ContentType.sharedInstance.getContentType(forExtension: type) {
+            var contentCharset = ""
+            if let charset = charset {
+                contentCharset = "; charset=\(charset)"
+            }
+            self.add(name: "Content-Type", value: contentType + contentCharset)
+        }
+    }
+
+  public mutating func addAttachment(for filePath: String? = nil) {
+        guard let filePath = filePath else {
+            self.add(name: "Content-Disposition", value: "attachment")
+            return
+        }
+
+        let filePaths = filePath.split {$0 == "/"}.map(String.init)
+        guard let fileName = filePaths.last else {
+            return
+        }
+        self.add(name: "Content-Disposition", value: "attachment; fileName = \"\(fileName)\"")
+
+        let contentType =  ContentType.sharedInstance.getContentType(forFileName: fileName)
+        if  let contentType = contentType {
+            self.add(name: "Content-Type", value: contentType)
+        }
+    }
+
+    public mutating func setLocation(_ path: String) {
+        var p = path
+        if  p == "back" {
+            if self["referrer"].count > 0 {
+                p = self["referrer"][0] 
+            } else {
+                p = "/"
+            }
+        }
+        self.add(name: "Location", value: p)
+    }
+}

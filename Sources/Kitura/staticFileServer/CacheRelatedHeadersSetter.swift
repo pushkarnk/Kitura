@@ -48,7 +48,7 @@ extension StaticFileServer {
             if addLastModifiedHeader {
                 let date = fileAttributes[FileAttributeKey.modificationDate] as? Date
                 if let date = date {
-                    response.headers["Last-Modified"] = SPIUtils.httpDate(date)
+                    response.httpHeaders.add(name: "Last-Modified", value: SPIUtils.httpDate(date))
                 }
             }
         }
@@ -57,12 +57,12 @@ extension StaticFileServer {
                              fileAttributes: [FileAttributeKey : Any]) {
             if generateETag,
                 let etag = CacheRelatedHeadersSetter.calculateETag(from: fileAttributes) {
-                response.headers["Etag"] = etag
+                response.httpHeaders.add(name: "Etag", value: etag)
             }
         }
 
         private func setMaxAge(response: RouterResponse) {
-            response.headers["Cache-Control"] = "max-age=\(maxAgeCacheControlHeader)"
+            response.httpHeaders.add(name: "Cache-Control", value: "max-age=\(maxAgeCacheControlHeader)")
         }
 
         static func calculateETag(from fileAttributes: [FileAttributeKey : Any]) -> String? {

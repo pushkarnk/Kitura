@@ -154,11 +154,14 @@ public class RouterRequest {
     // MARK: Headers
 
     /// List of HTTP headers with simple String values.
-    public let headers: Headers
+    //public let headers: Headers
+
+    /// Alternate way of passing HTTP Headers
+    public let httpHeaders: HTTPHeaders
 
     /// Parsed Cookies, used to do a lazy parsing of the appropriate headers.
     public lazy var cookies: [String: HTTPCookie] = { [unowned self] in
-        return Cookies.parse(headers: self.serverRequest.headers)
+        return Cookies.parse(headers: self.serverRequest.httpHeaders)
         }()
 
     // MARK: Query parameters
@@ -205,7 +208,7 @@ public class RouterRequest {
         parsedURLPath = URLParser(url: request.url, isConnect: false)
         httpVersion = HTTPVersion(major: serverRequest.httpVersionMajor ?? 1, minor: serverRequest.httpVersionMinor ?? 1)
         method = RouterMethod(fromRawValue: serverRequest.method)
-        headers = Headers(headers: serverRequest.headers)
+        httpHeaders = serverRequest.httpHeaders
         self.decoder = decoder
     }
 
@@ -265,10 +268,10 @@ public class RouterRequest {
     /// - Parameter types: array of content/mime type strings.
     /// - Returns: most acceptable type or nil if there are none.
     public func accepts(header: String = "Accept", types: [String]) -> String? {
-        guard let acceptHeaderValue = headers[header] else {
+        guard httpHeaders[header].count >  0 else {
             return nil
         }
-
+        let acceptHeaderValue = httpHeaders[header][0]
         let headerValues = acceptHeaderValue.split(separator: ",").map(String.init)
         // special header value that matches all types
         let matchAllPattern: String
@@ -303,12 +306,12 @@ public class RouterRequest {
 }
 
 private class Cookies {
-    fileprivate static func parse(headers: HeadersContainer) -> [String: HTTPCookie] {
+    fileprivate static func parse(headers: HTTPHeaders) -> [String: HTTPCookie] {
         var cookies = [String: HTTPCookie]()
-        guard let cookieHeaders = headers["cookie"] else {
+        guard headers["cookie"].count > 0 else {
             return cookies
         }
-
+        let cookieHeaders = headers["cookie"]
         for cookieHeader in cookieHeaders {
             for cookie in cookieHeader.components(separatedBy: ";") {
                 let trimmedCookie = cookie.trimmingCharacters(in: .whitespaces)

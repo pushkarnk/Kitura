@@ -34,7 +34,7 @@ import KituraContracts
  The String "Hello world" is added to the body and the response is transmitted.
  ```swift
  router.get("/example") { _, response, next in
-     response.headers["Content-Type"] = "text/html"
+     response.httpHeaders(name: "Content-Type", value: "text/html")
      response.status(.OK)
      try response.send("Hello world").end()
  }
@@ -124,7 +124,7 @@ public class RouterResponse {
     public var error: Swift.Error?
 
     /// HTTP headers of the response.
-    public var headers: Headers
+    public var httpHeaders: HTTPHeaders
 
     /// HTTP status code of the response.
     public var statusCode: HTTPStatusCode {
@@ -156,7 +156,7 @@ public class RouterResponse {
         self.request = request
         self.encoders = encoders
         self.defaultResponseMediaType = defaultResponseMediaType
-        headers = Headers(headers: response.headers)
+        httpHeaders = response.httpHeaders//Headers(headers: response.headers)
         statusCode = .unknown
         state.response = self
     }
@@ -196,9 +196,9 @@ public class RouterResponse {
         let content = lifecycle.writtenDataFilter(buffer.data)
         lifecycle.resetWrittenDataFilter()
 
-        let contentLength = headers["Content-Length"]
-        if  contentLength == nil {
-            headers["Content-Length"] = String(content.count)
+        let contentLength = httpHeaders["Content-Length"]
+        if  contentLength.count == 0 {
+            httpHeaders.add(name: "Content-Length", value: String(content.count))
         }
 
         if cookies.count > 0 {
@@ -228,7 +228,9 @@ public class RouterResponse {
 
             cookieStrings.append(cookieString)
         }
-        response.headers.append("Set-Cookie", value: cookieStrings)
+        for string in cookieStrings {
+            response.httpHeaders.add(name: "Set-Cookie", value: string)
+        }
     }
 
     /**
@@ -244,11 +246,11 @@ public class RouterResponse {
      * - Returns: A tuple of the highest rated MediaType and it's corresponding Encoder, or a JSONEncoder() if no encoders match the Accepts header and it's corresponding .
      */
     private func selectResponseEncoder(_ request: RouterRequest) -> (MediaType, BodyEncoder) {
-        let acceptHeader = request.headers["accept"]
+        let acceptHeader = request.httpHeaders["accept"]
         if encoders.count == 1 ||
-            acceptHeader == nil ||
-            acceptHeader == "*" ||
-            acceptHeader == "*/*" {
+            acceptHeader.count == 0 ||
+            acceptHeader[0] == "*" ||
+            acceptHeader[0] == "*/*" {
             if let defaultEncoder = encoders[defaultResponseMediaType] {
                 return (defaultResponseMediaType, defaultEncoder())
             } else {
@@ -291,7 +293,7 @@ public class RouterResponse {
     /// - Returns: This RouterResponse.
     @discardableResult
     public func redirect(_ path: String, status: HTTPStatusCode = .movedTemporarily) throws -> RouterResponse {
-        headers.setLocation(path)
+        httpHeaders.setLocation(path)
         try self.status(status).end()
         return self
     }
@@ -419,7 +421,7 @@ public class RouterResponse {
     public func format(callbacks: [String : ((RouterRequest, RouterResponse) -> Void)]) throws {
         let callbackTypes = Array(callbacks.keys)
         if let acceptType = request.accepts(types: callbackTypes) {
-            headers["Content-Type"] = acceptType
+            httpHeaders.add(name: "Content-Type", value: acceptType)
             callbacks[acceptType]!(request, self)
         } else if let defaultCallback = callbacks["default"] {
             defaultCallback(request, self)
@@ -518,7 +520,7 @@ public class RouterResponse {
         
         let contentType = ContentType.sharedInstance.getContentType(forFileName: fileName)
         if  let contentType = contentType {
-            headers["Content-Type"] = contentType
+            httpHeaders.add(name: "Content-Type", value: contentType)
         }
         
         send(data: data)
@@ -536,7 +538,7 @@ public class RouterResponse {
             return
         }
         try send(fileName: StaticFileServer.ResourcePathHandler.getAbsolutePath(for: download))
-        headers.addAttachment(for: download)
+        httpHeaders.addAttachment(for: download)
     }
     
     typealias JSONSerializationType = JSONSerialization
@@ -555,7 +557,7 @@ public class RouterResponse {
         
         do {
             let jsonData = try JSONSerializationType.data(withJSONObject: json, options:.prettyPrinted)
-            headers.setType("json")
+            httpHeaders.setType("json")
             send(data: jsonData)
         } catch {
             Log.warning("Failed to convert JSON for sending: \(error.localizedDescription)")
@@ -579,7 +581,7 @@ public class RouterResponse {
         
         do {
             let jsonData = try JSONSerializationType.data(withJSONObject: json, options:.prettyPrinted)
-            headers.setType("json")
+            httpHeaders.setType("json")
             send(data: jsonData)
         } catch {
             Log.warning("Failed to convert JSON for sending: \(error.localizedDescription)")
@@ -608,7 +610,7 @@ extension RouterResponse {
         }
         do {
             let (mediaType, encoder) = selectResponseEncoder(request)
-            headers["Content-Type"] = mediaType.description
+            httpHeaders.add(name: "Content-Type", value: mediaType.description)
             send(data: try encoder.encode(obj))
         } catch {
             Log.warning("Failed to encode Codable object for sending: \(error.localizedDescription)")
@@ -630,7 +632,7 @@ extension RouterResponse {
             return self
         }
         do {
-            headers.setType("json")
+            httpHeaders.setType("json")
             send(data: try (encoders[.json]?() ?? JSONEncoder()).encode(json))
         } catch {
             Log.warning("Failed to encode Codable object for sending: \(error.localizedDescription)")
@@ -679,11 +681,11 @@ extension RouterResponse {
         let taintedJSCallbackName = request.queryParameters[callbackParameter]
 
         if let jsCallbackName = validJsonpCallbackName(taintedJSCallbackName) {
-            headers.setType("js")
+            httpHeaders.setType("js")
             // Set header "X-Content-Type-Options: nosniff" and prefix body with
             // "/**/ " as security mitigation for Flash vulnerability
             // CVE-2014-4671, CVE-2014-5333 "Abusing JSONP with Rosetta Flash"
-            headers["X-Content-Type-Options"] = "nosniff"
+            httpHeaders.add(name: "X-Content-Type-Options", value: "nosniff")
             send("/**/ " + jsCallbackName + "(" + jsonToJS(jsonStr) + ")")
         } else {
             throw JSONPError.invalidCallbackName(name: taintedJSCallbackName)

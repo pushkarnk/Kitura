@@ -550,7 +550,7 @@ extension Router : ServerDelegate {
     ///                      HTTP request at the [Kitura-net](http://ibm-swift.github.io/Kitura-net/) API level.
     public func handle(request: ServerRequest, response: ServerResponse) {
         var decoder: (() -> BodyDecoder)?
-        if let contentType = request.headers["Content-Type"]?[0], let mediaType = MediaType(contentTypeHeader: contentType) {
+        if request.httpHeaders["Content-Type"].count > 0, let mediaType = MediaType(contentTypeHeader: request.httpHeaders["Content-Type"][0]) {
             decoder = decoders[mediaType]
         }
         let routeReq = RouterRequest(request: request, decoder: decoder?())
