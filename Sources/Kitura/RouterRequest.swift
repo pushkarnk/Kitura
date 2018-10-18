@@ -115,7 +115,7 @@ public class RouterRequest {
         if let result = self._parsedURL {
             return result
         } else {
-            let result = URLParser(url: self.serverRequest.urlURL.absoluteString.data(using: .utf8)!, isConnect: false)
+            let result = URLParser.createURLParser(url: self.serverRequest.urlURL.absoluteString.data(using: .utf8)!, isConnect: false)
             self._parsedURL = result
             return result
         }
@@ -202,7 +202,7 @@ public class RouterRequest {
     /// - Parameter decoder: the decoder generator to use when decoding the request body.
     init(request: ServerRequest, decoder: BodyDecoder?) {
         serverRequest = request
-        parsedURLPath = URLParser(url: request.url, isConnect: false)
+        parsedURLPath = URLParser.createURLParser(url: request.url, isConnect: false)
         httpVersion = HTTPVersion(major: serverRequest.httpVersionMajor ?? 1, minor: serverRequest.httpVersionMinor ?? 1)
         method = RouterMethod(fromRawValue: serverRequest.method)
         headers = Headers(headers: serverRequest.headers)
